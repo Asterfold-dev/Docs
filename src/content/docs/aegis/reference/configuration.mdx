@@ -1,0 +1,47 @@
+---
+title: Configuration
+description: Environment variables and runtime settings.
+---
+
+## Environment variables
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes | PostgreSQL connection string. |
+| `BETTER_AUTH_URL` | Yes | Public origin. Must match the URL users open. |
+| `BETTER_AUTH_SECRET` | Yes | Strong random secret. |
+| `PORT` | No | Production port; defaults to `3000`. Dev uses `3001`. |
+
+Docker Compose also reads:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `POSTGRES_USER` | `sso` | Database user. |
+| `POSTGRES_PASSWORD` | — | Database password; required. |
+| `POSTGRES_DB` | `sso` | Database name. |
+| `POSTGRES_PORT` | `5432` | Host port for PostgreSQL. |
+| `AEGIS_IMAGE` | `ghcr.io/asterfold-dev/aegis:latest` | Image tag to deploy. |
+| `AEGIS_PORT` | `3001` | Host port for the app. |
+| `AEGIS_ADMIN_EMAIL` | — | First admin email for the setup profile. |
+| `AEGIS_ADMIN_PASSWORD` | — | First admin password. |
+| `AEGIS_ADMIN_NAME` | `Admin` | First admin display name. |
+
+## Settings
+
+Runtime settings are stored in PostgreSQL and audited when changed. Open
+**Console → Settings**.
+
+| Setting | What it controls |
+| --- | --- |
+| **Sign-in experience** | Support email and a short message on the login page. |
+| **Appearance** | Accent color for buttons, links, and focus rings. |
+| **Application defaults** | Default scopes and consent behavior for new clients. |
+| **Authentication security** | Require MFA for admins or every account. |
+| **Password policy** | Minimum length and required character classes. |
+| **New user defaults** | Default role and groups for new accounts. |
+| **Sessions** | Lifetime and maximum concurrent sessions. |
+| **Rate limits** | General auth, sign-in/second factor, and token endpoint limits. |
+
+Settings changes apply to new sign-ins and new accounts; existing passwords and
+sessions are not rewritten. The **Sessions** card can sign the current operator
+out of every other browser.

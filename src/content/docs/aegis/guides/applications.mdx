@@ -1,0 +1,63 @@
+---
+title: Applications
+description: Register OIDC clients, configure redirect URIs, scopes, consent, secrets, and group access.
+---
+
+Applications are the OIDC clients that rely on Aegis for sign-in. Open
+**Console → Applications** to manage them.
+
+![Application access dialog](/docs/aegis/app-access.png)
+
+## Create a client
+
+1. Select **Create application**.
+2. Give it a name and at least one redirect URI.
+3. Choose **Confidential** for a server-side app that can keep a secret, or
+   **Public** for a SPA or native app that uses PKCE only.
+4. Decide whether it is a trusted first-party app. Trusted apps skip consent.
+
+The client ID is always shown. A confidential client receives a secret once;
+store it immediately.
+
+## Redirect URIs
+
+Redirect URIs must match exactly. HTTPS is required except on localhost. The
+edit dialog accepts multiple redirect URIs, one per line.
+
+## Scopes
+
+The edit dialog controls the scopes requested by the client:
+
+| Scope | Purpose |
+| --- | --- |
+| `openid` | Required. Authenticate the user and issue an ID token. |
+| `profile` | Name, username, and profile claims. |
+| `email` | Email address and verification status. |
+| `offline_access` | Issue refresh tokens. |
+| `groups` | Add group membership claims. |
+
+Changes apply to new authorization requests. Existing tokens keep their
+original scopes.
+
+## Client secrets
+
+Confidential clients use a client secret at the token endpoint. **Rotate
+secret** replaces it immediately; the old secret stops working. The new secret
+is shown once and is never stored in readable form.
+
+Public clients have no secret and always use PKCE.
+
+## Disable and delete
+
+Disabling a client blocks new sign-in and token requests while keeping its data.
+Deleting a client permanently removes the client registration, tokens, refresh
+tokens, consents, and group access. Applications using it stop working.
+
+## Group access
+
+Choose which groups can sign in under **Applications → Access**. Group
+membership is checked before consent, so a denied user never receives an
+authorization code. Leave every group unchecked to allow all signed-in users.
+
+Enable **Expose group membership** to add the `groups` scope and include group
+slugs in tokens and UserInfo. See [OIDC & groups](../oidc/).

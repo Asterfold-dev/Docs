@@ -1,0 +1,72 @@
+---
+title: Aegis
+description: A self-hosted OpenID Connect identity provider with passkeys, TOTP, groups, and an auditable admin console.
+template: splash
+hero:
+  title: Aegis
+  tagline: One identity for every app you run.
+  actions:
+    - text: Quick start
+      link: ./getting-started/quick-start/
+      icon: right-arrow
+      variant: primary
+    - text: Docker deployment
+      link: ./getting-started/docker/
+      icon: external
+      variant: minimal
+---
+
+import { CardGrid, LinkCard } from "@astrojs/starlight/components"
+
+Aegis is a lightweight, self-hosted **OpenID Connect** provider with a shadcn
+admin console. It is designed for a small team that wants standard OIDC,
+passkeys, TOTP, groups, session policy, and self-service account management
+without running Redis or a second control plane.
+
+## Start here
+
+<CardGrid>
+  <LinkCard
+    title="Quick start"
+    description="Run Aegis locally with Node and PostgreSQL."
+    href="./getting-started/quick-start/"
+  />
+  <LinkCard
+    title="Docker"
+    description="Run the published image with Compose, migrations, and a first admin."
+    href="./getting-started/docker/"
+  />
+  <LinkCard
+    title="OIDC & groups"
+    description="Integrate an application, use PKCE, and expose group claims."
+    href="./guides/oidc/"
+  />
+  <LinkCard
+    title="Operations"
+    description="Configure secrets, HTTPS, backups, and upgrades."
+    href="./operations/deployment/"
+  />
+</CardGrid>
+
+## What it does
+
+| Area | Details |
+| --- | --- |
+| **OIDC** | Authorization code with PKCE, discovery, JWKS, UserInfo, introspection, revocation, and RP-initiated logout. |
+| **Second factors** | TOTP with backup codes, plus passkeys as a replacement for the code at the second-factor step. |
+| **Applications** | Register, edit, disable, rotate secrets for, and delete OIDC clients. Restrict clients to groups. |
+| **Console** | Users, groups, applications, sessions, analytics, health, settings, and audit events. |
+| **Account area** | Profile, username, password, passkeys, TOTP, own sessions, and group memberships. |
+| **Footprint** | One Node process and one PostgreSQL database. No Redis. |
+
+## Stack
+
+| Layer | Choice |
+| --- | --- |
+| Framework | [TanStack Start](https://tanstack.com/start) and [React 19](https://react.dev) |
+| Authentication and OIDC | [Better Auth](https://www.better-auth.com) |
+| Data | [Drizzle ORM](https://orm.drizzle.team) and [PostgreSQL](https://www.postgresql.org) |
+| UI | [Tailwind CSS 4](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com) (Base UI) |
+| Runtime | Node 22+ via [srvx](https://srvx.h3.dev) |
+
+The source lives in [Asterfold-dev/Aegis](https://github.com/Asterfold-dev/Aegis).

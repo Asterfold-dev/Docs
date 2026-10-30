@@ -1,0 +1,66 @@
+---
+title: Security
+description: Security model, session controls, rate limits, and the proof suite.
+---
+
+Aegis separates the protocol implementation from policy.
+
+## Model
+
+- **Better Auth owns the protocol**: sessions, authorization codes, PKCE,
+  tokens, UserInfo, JWKS, revocation, and logout.
+- **Aegis owns policy**: admin roles, client registration, groups, MFA,
+  password policy, session limits, analytics, and audit events.
+- **PostgreSQL owns state**: users, sessions, OAuth clients, tokens, JWKS,
+  groups, auth events, and audit events.
+
+Every admin server function re-checks the admin role. Hiding a button is not
+authorization. Group access is checked before consent, so denied users never
+receive an authorization code.
+
+## Sessions and cookies
+
+Sessions are HttpOnly and SameSite=Lax. Session lifetime and maximum concurrent
+sessions are configurable in **Settings → Sessions**. Public clients must use
+PKCE and never receive a secret.
+
+## Rate limits
+
+Rate limits cover sign-in, second factors, passkeys, token endpoints, and admin
+endpoints. They are applied per client IP. Behind a reverse proxy, forward
+`X-Real-IP` or `X-Forwarded-For`; the included `Caddyfile` does this.
+
+## Sensitive actions
+
+Password changes, MFA resets, session revocation, and user lifecycle actions all
+re-check authority on the server. Audit events record admin mutations.
+
+## Security proof suite
+
+The repository includes a 21-check proof suite. With the server and PostgreSQL
+running:
+
+```bash
+TEST_ADMIN_EMAIL=admin@example.com \
+TEST_ADMIN_PASSWORD='ChangeMe!2026' \
+npm run test:security
+```
+
+The suite creates temporary users, a group, and OAuth clients, then removes
+them. It covers:
+
+- group access denial and consent-state preservation,
+- the `groups` claim in ID tokens and UserInfo,
+- single-use authorization codes and PKCE enforcement,
+- admin API boundaries and redirect-URI validation,
+- JWKS private-key leakage and cookie flags,
+- username login and second-factor challenges,
+- password policy and session limits,
+- default groups and MFA-for-all,
+- auth-event recording.
+
+## Passkeys and HTTPS
+
+Passkeys require a secure context: `HTTPS` or `localhost`. A plain HTTP LAN
+address will not work for WebAuthn. Put Aegis behind Caddy or nginx with a
+hostname if users need passkeys from other devices.

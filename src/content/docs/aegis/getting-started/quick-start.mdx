@@ -1,0 +1,66 @@
+---
+title: Quick start
+description: Run Aegis locally with Node and PostgreSQL.
+---
+
+This guide runs Aegis from source with PostgreSQL. For a container deployment,
+use the [Docker guide](../docker/).
+
+## Requirements
+
+- Node.js 22 or newer
+- PostgreSQL 15 or newer
+- No Redis, message queue, or second service
+
+## Set up the app
+
+```bash
+git clone https://github.com/Asterfold-dev/Aegis.git
+cd Aegis
+
+cp .env.example .env
+# Set DATABASE_URL and a strong BETTER_AUTH_SECRET:
+# openssl rand -base64 32
+
+npm install
+docker compose up -d postgres   # or use your own PostgreSQL
+```
+
+`BETTER_AUTH_URL` must be the exact origin users open. For local development it
+is `http://localhost:3001`.
+
+## Create the schema and first admin
+
+```bash
+npm run db:push
+
+npm run auth:create-admin -- \
+  --email admin@example.com \
+  --password 'ChangeMe!2026' \
+  --name 'Admin' \
+  --role admin
+```
+
+`db:push` is the quickest path for a fresh development database. Production
+deployments should apply the committed migrations instead; see
+[Deployment](../../operations/deployment/).
+
+## Start Aegis
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3001](http://localhost:3001) and sign in with the admin
+email or username. Everyone lands on `/account`; admins can open the console
+from the profile menu.
+
+## Next steps
+
+- [Configure the console](../../guides/admin-console/)
+- [Connect an OIDC application](../../guides/oidc/)
+- [Run Aegis with Docker](../docker/)
+
+:::caution[Passkeys need a secure context]
+Use `localhost` or HTTPS. A plain HTTP LAN address will not work for WebAuthn.
+:::

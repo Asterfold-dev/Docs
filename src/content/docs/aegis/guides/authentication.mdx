@@ -1,0 +1,69 @@
+---
+title: Authentication
+description: Sign-in, TOTP, passkeys, password policy, and session policy.
+---
+
+Aegis supports local accounts with a password and a second factor. Public
+sign-up is disabled; an operator provisions every account.
+
+## Sign-in
+
+Users sign in with either their **email address** or **username**, plus their
+password. Accounts created before usernames existed can get one from the account
+area or with `npm run db:backfill-usernames`.
+
+![Account profile](/docs/aegis/account.png)
+
+## Second factors
+
+### TOTP
+
+Users can enroll an authenticator app from **Account → Security**. Enrollment
+returns a QR code and ten single-use backup codes.
+
+### Passkeys
+
+Passkeys can replace the TOTP code at the second-factor step once TOTP is
+enabled. They are not a replacement for the first factor. Use `localhost` or
+HTTPS; WebAuthn does not work on a plain HTTP LAN address.
+
+### MFA policy
+
+Admins can require an authenticator app in **Settings → Authentication
+security**:
+
+- for admin accounts only, or
+- for every account.
+
+The server enforces the policy; it is not only a UI hint.
+
+## Password policy
+
+**Settings → Password policy** controls the minimum length and required
+character classes. The policy applies to account changes, admin password
+resets, and new accounts. Existing passwords are not rewritten.
+
+## Sessions
+
+**Settings → Sessions** controls:
+
+- session lifetime in days, and
+- the maximum number of concurrent sessions per user (`0` means unlimited).
+
+Changing the policy applies to new sessions. Existing sessions keep their
+current expiry. The same card can sign the current operator out of every other
+browser.
+
+## Admin actions
+
+From **Users → Actions**, an admin can:
+
+- change a role,
+- set a password, optionally forcing a change at the next sign-in,
+- reset MFA (removes TOTP, backup codes, and passkeys and signs the user out),
+- revoke sessions,
+- deactivate or reactivate an account, and
+- delete an account.
+
+Deactivation keeps the user's data and group memberships. Deletion transfers
+OAuth clients owned by that user to the acting admin.

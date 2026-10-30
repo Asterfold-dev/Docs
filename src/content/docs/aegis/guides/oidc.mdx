@@ -1,0 +1,59 @@
+---
+title: OIDC & groups
+description: OIDC endpoints, PKCE, scopes, tokens, and group claims.
+---
+
+Aegis implements the OpenID Connect authorization code flow with PKCE. Use the
+`issuer` from the discovery document rather than a hardcoded URL.
+
+## Discovery
+
+```text
+/api/auth/.well-known/openid-configuration
+```
+
+The discovery document includes the issuer, authorization, token, UserInfo,
+JWKS, introspection, revocation, and end-session endpoints.
+
+## Endpoints
+
+| Endpoint | Path |
+| --- | --- |
+| Discovery | `/api/auth/.well-known/openid-configuration` |
+| Authorization | `/api/auth/oauth2/authorize` |
+| Token | `/api/auth/oauth2/token` |
+| UserInfo | `/api/auth/oauth2/userinfo` |
+| JWKS | `/api/auth/jwks` |
+| Introspection | `/api/auth/oauth2/introspect` |
+| Revocation | `/api/auth/oauth2/revoke` |
+| End session | `/api/auth/oauth2/end-session` |
+
+## Scopes
+
+Aegis supports `openid`, `profile`, `email`, `offline_access`, and `groups`.
+`openid` is required for OIDC.
+
+## Tokens
+
+Access tokens are **opaque by default**. Call UserInfo or introspection when an
+API needs claims. If an API needs a JWT access token, request a resource
+audience for the client; group claims are included in the JWT only when the
+`groups` scope and a resource audience are requested.
+
+ID tokens and UserInfo include group slugs such as `["engineering"]` when the
+client has the `groups` scope.
+
+## Group access
+
+Under **Applications → Access**, choose the groups allowed to sign in. Aegis
+denies authorization before consent when the user is not in any selected group.
+Group membership can also be exposed to the client through the `groups` scope.
+
+## Integration checklist
+
+- Register the exact callback URL.
+- Use PKCE for public clients.
+- Use the discovery issuer.
+- Request only the scopes the application needs.
+- Keep the client secret server-side.
+- Test sign-out with the end-session endpoint.

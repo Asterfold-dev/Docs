@@ -1,0 +1,68 @@
+---
+title: Troubleshooting
+description: Common issues with passkeys, issuers, MFA, rate limits, Docker, and migrations.
+---
+
+## Passkeys do not work
+
+Passkeys require a secure context. Use `https://` or `localhost`. A plain HTTP
+LAN address such as `http://192.168.1.10:3001` does not match the WebAuthn RP ID.
+Put Aegis behind HTTPS with a hostname.
+
+## OIDC client rejects the issuer
+
+Use the `issuer` from discovery; do not hardcode a URL. `BETTER_AUTH_URL` must
+match the public origin exactly, including the scheme and port. If discovery
+advertises `https` but endpoints are served over `http`, clients may reject the
+configuration.
+
+## MFA is required but there is no authenticator
+
+An admin can reset MFA from **Users → Actions → Reset MFA**. The user is signed
+out and can enroll again. If the only admin is locked out, create or repair an
+operator account with:
+
+```bash
+npm run auth:create-admin -- \
+  --email admin@example.com \
+  --password 'ChangeMe!2026' \
+  --name 'Admin' \
+  --role admin \
+  --force
+```
+
+## Docker cannot pull the image
+
+The GHCR package may be private. Sign in with a GitHub token that has
+`read:packages`:
+
+```bash
+docker login ghcr.io
+```
+
+Then retry `docker compose up -d`.
+
+## Compose stops before the app starts
+
+Check the one-shot migration service:
+
+```bash
+docker compose logs migrate
+docker compose ps
+```
+
+If the database already contains tables from `db:push`, the first run baselines
+the initial migration. If migrations still fail, check `DATABASE_URL` and the
+PostgreSQL health check.
+
+## Rate limits blame the wrong IP
+
+Behind a proxy, forward the client IP with `X-Real-IP` or `X-Forwarded-For`.
+The included `Caddyfile` does this. Without a trusted IP header, rate limiting
+falls back to a shared per-path bucket.
+
+## Analytics is empty
+
+Auth events start at the release that introduced analytics. A pending
+second-factor challenge is not counted; only a completed session or a
+trusted-device bypass is.

@@ -1,0 +1,100 @@
+---
+title: Docker
+description: Run Aegis with the published image, PostgreSQL, and automatic migrations.
+---
+
+The Compose stack runs PostgreSQL, applies migrations in a one-shot service,
+then starts the app. The Docker workflow publishes versioned images to
+`ghcr.io/asterfold-dev/aegis`.
+
+## Prepare the environment
+
+```bash
+cp .env.example .env
+```
+
+Set these values in `.env`:
+
+| Variable | Purpose |
+| --- | --- |
+| `BETTER_AUTH_URL` | The exact public origin, for example `https://auth.example.com`. |
+| `BETTER_AUTH_SECRET` | A long random secret. Generate one with `openssl rand -base64 32`. |
+| `POSTGRES_PASSWORD` | The database password. Change it from the example value. |
+| `AEGIS_ADMIN_EMAIL` | Email for the first admin account. |
+| `AEGIS_ADMIN_PASSWORD` | Password for the first admin account. |
+| `AEGIS_ADMIN_NAME` | Optional display name; defaults to `Admin`. |
+| `AEGIS_IMAGE` | Release tag to deploy, for example `ghcr.io/asterfold-dev/aegis:v1.2.3`. |
+| `AEGIS_PORT` | Host port for the app; defaults to `3001`. |
+
+If the package is private, authenticate to GHCR first. Use a GitHub token with
+`read:packages`:
+
+```bash
+docker login ghcr.io
+```
+
+## Start the stack
+
+```bash
+docker compose up -d
+```
+
+This starts:
+
+- `postgres` — PostgreSQL with a persisted volume;
+- `migrate` — applies the committed migrations and exits;
+- `app` — the Aegis server, after migrations succeed.
+
+Create the first admin once:
+
+```bash
+docker compose --profile setup run --rm create-admin
+```
+
+Then open `http://localhost:3001` (or the origin in `BETTER_AUTH_URL`) and sign
+in.
+
+## Put it behind HTTPS
+
+Use Caddy or nginx in front of the app. The repository includes a `Caddyfile`
+that proxies to `127.0.0.1:3001` and forwards the client IP. Set
+`BETTER_AUTH_URL` to the public HTTPS origin before starting the stack.
+
+Passkeys require HTTPS or `localhost`.
+
+## Upgrades
+
+Set `AEGIS_IMAGE` to the new release tag and recreate the stack:
+
+```bash
+AEGIS_IMAGE=ghcr.io/asterfold-dev/aegis:v1.2.3 docker compose up -d
+```
+
+The `migrate` service runs again before the app starts. Existing databases
+created with `db:push` are baselined automatically on the first container run.
+
+## Local development
+
+Start only the database with Compose, then run the app from source:
+
+```bash
+docker compose up -d postgres
+npm run dev
+```
+
+## Data and backups
+
+The `sso-postgres` volume holds users, sessions, OAuth clients, tokens, and the
+`jwks` signing keys. Back it up regularly. Losing the signing keys invalidates
+every token already issued.
+
+```bash
+docker compose exec postgres pg_dump -U sso sso > aegis-backup.sql
+```
+
+## Releases
+
+Maintainers publish a release by pushing a `vX.Y.Z` tag to GitHub. The Docker
+workflow builds multi-arch images and attaches the Compose files to the GitHub
+release. See the [deployment guide](../../operations/deployment/) for the full
+production checklist.

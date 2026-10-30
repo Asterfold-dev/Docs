@@ -1,0 +1,62 @@
+---
+title: Admin console
+description: Users, groups, applications, sessions, analytics, health, settings, and audit events.
+---
+
+The admin console is the operational surface for the identity server. Everyone
+lands on the account area after signing in; admins can open the console from
+the profile menu.
+
+![Settings page](/docs/aegis/settings.png)
+
+## Areas
+
+| Area | What it does |
+| --- | --- |
+| **Overview** | User, application, session, and audit snapshots. |
+| **Analytics** | 7, 30, and 90-day sign-ins, failure rate, active users, MFA adoption, and application usage. |
+| **Users** | Search, provision, roles, groups, password resets, MFA resets, deactivation, and deletion. |
+| **Groups** | Create groups, manage members, and use them for application access and token claims. |
+| **Applications** | Register, edit, disable, rotate secrets for, and delete OIDC clients. |
+| **Sessions** | Active sessions with IP, device, expiry, and revocation. |
+| **Health** | PostgreSQL latency, database size, signing keys, session counts, runtime, and rate-limit status. |
+| **Settings** | Sign-in, appearance, application defaults, authentication, users, sessions, and rate limits. |
+
+## Applications
+
+The applications table shows client type, redirect URI, consent behavior, group
+access, status, and creation date. The row menu includes:
+
+- **Edit application** — name, redirect URIs, scopes, and trusted first-party
+  consent.
+- **Rotate secret** — for confidential clients; the new secret is shown once.
+- **Disable** — blocks new sign-in and token requests without deleting data.
+- **Delete** — removes the client, its tokens, consents, and group access.
+
+![Applications page](/docs/aegis/applications.png)
+
+## Analytics
+
+Analytics is based on recorded auth events. A pending second-factor challenge is
+not counted as a sign-in; only a completed session or a trusted-device bypass is.
+Metrics start at the release that introduced auth-event recording.
+
+## Audit events
+
+Admin mutations are written to the audit log: user creation and role changes,
+deactivation, deletion, group membership, application changes, secret rotation,
+password resets, MFA resets, session revocation, and settings changes.
+
+## Settings
+
+Settings are stored in PostgreSQL, cached briefly at runtime, and audited when
+changed. The main cards cover:
+
+- support email and sign-in message,
+- accent color,
+- default scopes and consent behavior,
+- MFA requirements,
+- password policy,
+- new-user role and groups,
+- session lifetime and concurrency, and
+- rate limits.

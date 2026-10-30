@@ -1,0 +1,89 @@
+---
+title: Deployment
+description: Environment variables, migrations, reverse proxying, backups, and production checks.
+---
+
+## Environment
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes | PostgreSQL connection string. |
+| `BETTER_AUTH_URL` | Yes | Exact public origin, for example `https://auth.example.com`. |
+| `BETTER_AUTH_SECRET` | Yes | Strong secret, for example `openssl rand -base64 32`. |
+| `PORT` | No | Production server port; defaults to `3000`. The dev server uses `3001`. |
+
+Docker Compose additionally uses `POSTGRES_USER`, `POSTGRES_PASSWORD`,
+`POSTGRES_DB`, `POSTGRES_PORT`, `AEGIS_IMAGE`, `AEGIS_PORT`, and the optional
+`AEGIS_ADMIN_*` variables.
+
+## Database migrations
+
+Migrations are committed under `drizzle/`. Apply them with:
+
+```bash
+npm run db:migrate
+```
+
+The production runtime has a dependency-light equivalent:
+
+```bash
+npm run db:migrate:prod
+```
+
+The Docker Compose `migrate` service runs this automatically before the app
+starts. Databases created with the older `db:push` workflow are baselined on the
+first container run.
+
+Use `npm run db:generate` only after changing the Drizzle schema.
+
+## Production checklist
+
+1. Put Aegis behind Caddy or nginx and serve it over HTTPS. The included
+   `Caddyfile` forwards `X-Real-IP` and `X-Forwarded-Proto`.
+2. Set `BETTER_AUTH_URL` to the exact public HTTPS origin.
+3. Use a long, random `BETTER_AUTH_SECRET`.
+4. Keep PostgreSQL private and back it up regularly. Include the `jwks` table.
+5. Apply migrations before starting a new version.
+6. Run the [security proof suite](../security/) against a deployed instance when
+   possible.
+
+## Build and run
+
+From source:
+
+```bash
+npm run build
+PORT=3001 npm run start
+```
+
+With Docker:
+
+```bash
+docker compose up -d
+```
+
+The srvx adapter serves `dist/client` and listens on `PORT`.
+
+## Reverse proxy
+
+The included `Caddyfile` proxies to `127.0.0.1:3001` and forwards the real
+client IP. If you use another proxy, forward `X-Real-IP` or `X-Forwarded-For`
+and terminate TLS there. Set `BETTER_AUTH_URL` to the public HTTPS origin, not
+the internal container address.
+
+## Backups
+
+Back up the PostgreSQL database, including:
+
+- users, accounts, sessions, and passkeys,
+- OAuth clients, tokens, consents, and group access,
+- the `jwks` signing keys,
+- audit and auth events.
+
+Losing the signing keys invalidates every token already issued.
+
+Docker example:
+
+```bash
+docker compose exec postgres pg_dump -U sso sso > aegis-backup.sql
+```

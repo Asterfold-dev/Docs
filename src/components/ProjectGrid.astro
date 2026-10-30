@@ -1,0 +1,17 @@
+---
+import { CardGrid, LinkCard } from "@astrojs/starlight/components"
+import { projects } from "../data/projects"
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "")
+const href = (path: string) => `${base}/${path.replace(/^\//, "")}`
+---
+
+<CardGrid>
+  {projects.map((project) => (
+    <LinkCard
+      title={project.name}
+      description={project.description}
+      href={href(project.href)}
+    />
+  ))}
+</CardGrid>
