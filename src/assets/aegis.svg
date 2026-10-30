@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Aegis</title>
+  <desc id="desc">A shield with a check mark cut out of it.</desc>
+  <mask id="check" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+    <rect width="64" height="64" fill="#fff"/>
+    <path d="m23 31.5 6 6 12-13" fill="none" stroke="#000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </mask>
+  <rect width="64" height="64" rx="14" fill="#111318" stroke="#ffffff" stroke-opacity=".14"/>
+  <path d="M32 9.5 51 16.5V30.5C51 40.5 43.7 49 32 53.5 20.3 49 13 40.5 13 30.5V16.5L32 9.5Z" fill="#fff" mask="url(#check)"/>
+</svg>
