@@ -71,3 +71,26 @@ Checks run from the agent, not from the Vigil server, so they see the target
 from the monitored host’s network position. Any user who can create checks can
 make the agent connect to internal addresses. Keep Vigil accounts trusted, or
 restrict check creation to administrators in a future release.
+
+
+## Single sign-on
+
+Vigil can use Aegis as its OIDC identity provider. Register a confidential
+client in Aegis with this callback:
+
+```text
+https://vigil.example.com/api/auth/callback/aegis
+```
+
+Set `AEGIS_OIDC_ISSUER`, `AEGIS_OIDC_CLIENT_ID`, and
+`AEGIS_OIDC_CLIENT_SECRET`, then restart Vigil. The login page shows a
+**Continue with Aegis** button, and **Settings → Single sign-on** can link the
+current account.
+
+Aegis requires HTTPS for non-loopback redirect URIs. Plain HTTP only works for
+`localhost` during development. Put Vigil behind TLS before enabling SSO for a
+LAN or public host.
+
+SSO users are created as members on first sign-in. Administrators can promote
+them under **Users**. Local password accounts remain available as a fallback,
+and the last administrator cannot be demoted or deleted.

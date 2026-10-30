@@ -100,3 +100,22 @@ Open **Notifications → Add channel**. Webhooks receive a JSON body with an
 SMTP; the configuration is encrypted at rest.
 
 Leave a rule’s channel selection empty to send to every enabled channel.
+
+
+## Users and SSO
+
+**Users** lists local and SSO accounts, their role, active sessions, and last
+activity. Administrators can add local accounts, change roles, revoke sessions,
+or delete users. The last administrator cannot be removed.
+
+To enable Aegis single sign-on:
+
+1. In Aegis, create a confidential OIDC application.
+2. Register `https://your-vigil-host/api/auth/callback/aegis` as the redirect
+   URI and allow the `openid`, `profile`, `email`, and `groups` scopes.
+3. Set `AEGIS_OIDC_ISSUER`, `AEGIS_OIDC_CLIENT_ID`, and
+   `AEGIS_OIDC_CLIENT_SECRET` in Vigil's environment.
+4. Restart Vigil. The login page now offers **Continue with Aegis**.
+
+SSO requires HTTPS for non-localhost hosts because Aegis rejects insecure
+redirect URIs.
