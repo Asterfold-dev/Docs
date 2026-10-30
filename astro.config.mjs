@@ -3,7 +3,7 @@ import starlight from "@astrojs/starlight"
 
 export default defineConfig({
   site: "https://asterfold-dev.github.io",
-  base: "/docs",
+  base: "/Docs",
   integrations: [
     starlight({
       title: "Asterfold Docs",
@@ -20,7 +20,7 @@ export default defineConfig({
         },
       ],
       editLink: {
-        baseUrl: "https://github.com/Asterfold-dev/docs/edit/main/",
+        baseUrl: "https://github.com/Asterfold-dev/Docs/edit/main/",
       },
       lastUpdated: true,
       customCss: ["./src/styles/custom.css"],

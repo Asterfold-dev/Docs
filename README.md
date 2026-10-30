@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-The site is served at `http://localhost:4321/docs/`.
+The site is served at `http://localhost:4321/Docs/`.
 
 ## Build
 
@@ -38,7 +38,7 @@ under its slug so future projects do not share a namespace.
 The site is configured for the GitHub Pages project URL:
 
 ```text
-https://asterfold-dev.github.io/docs/
+https://asterfold-dev.github.io/Docs/
 ```
 
 `astro.config.mjs` sets `site` and `base` accordingly. The workflow in
