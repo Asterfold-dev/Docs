@@ -8,8 +8,9 @@ export default defineConfig({
     starlight({
       title: "Asterfold Docs",
       description: "Documentation for Asterfold projects.",
+      favicon: "/favicon.png",
       logo: {
-        src: "./src/assets/asterfold.svg",
+        src: "./src/assets/asterfold.png",
         alt: "Asterfold",
       },
       social: [
