@@ -1,0 +1,102 @@
+---
+title: Quick start
+description: Run Vigil with Docker Compose and enroll the first host.
+---
+
+The Compose stack runs PostgreSQL, applies migrations in a one-shot service,
+then starts the app.
+
+## Prepare the environment
+
+```bash
+cp .env.example .env
+```
+
+Set these values:
+
+| Variable | Purpose |
+| --- | --- |
+| `APP_URL` | The exact address monitored hosts use to reach Vigil, for example `https://vigil.example.com` or `http://192.168.2.86:3100`. |
+| `VIGIL_PORT` | Host port for the app; defaults to `3100`. |
+| `POSTGRES_PASSWORD` | Password for the bundled database. Change it. |
+| `BETTER_AUTH_SECRET` | Long random secret for sessions and channel encryption. Generate with `openssl rand -hex 32`. |
+| `RETENTION_DAYS` | Raw metric and check-result retention; defaults to 30. |
+
+`APP_URL` must be reachable from every monitored host. `localhost` only works
+when the agent runs on the same machine.
+
+## Start the stack
+
+```bash
+docker compose up -d --build
+```
+
+This starts:
+
+- `db` — PostgreSQL with a persisted volume;
+- `migrate` — applies committed migrations and exits;
+- `app` — the Vigil server, after migrations succeed.
+
+Open the address in `APP_URL`. The first visit redirects to **Setup**. Create
+the administrator account; setup closes after the first account exists.
+
+## Enroll a host
+
+1. Open **Overview** and choose **Add host**.
+2. Optionally give the host a label.
+3. Copy the install command and run it as root on the host:
+
+```bash
+curl -fsSL http://your-vigil-host:3100/install.sh \
+  | sudo env VIGIL_SERVER='http://your-vigil-host:3100' VIGIL_TOKEN='vge_...' sh
+```
+
+The installer downloads the matching amd64 or arm64 binary, verifies its
+SHA-256 checksum, creates the `vigil` user, writes
+`/etc/vigil/agent.env`, installs a systemd unit, and starts it.
+
+The enrollment token is single-use and expires after one hour. If it expires,
+generate a new one with **New token**.
+
+## Verify
+
+The host appears within a few seconds. Check the agent on the host:
+
+```bash
+systemctl status vigil-agent
+journalctl -u vigil-agent -f
+```
+
+The first sample creates the host’s metrics. Vigil seeds five alert rules on
+first load:
+
+- CPU above 90% for 5 minutes;
+- memory above 90% for 5 minutes;
+- disk above 85% for 10 minutes;
+- host offline immediately;
+- a check failing for 2 minutes.
+
+Adjust or disable them under **Alerts**.
+
+## Add a check
+
+Open **Checks → New check**, choose the host and type, and enter a target:
+
+| Type | Target example |
+| --- | --- |
+| HTTP(S) | `https://example.com/health` |
+| TCP | `127.0.0.1:5432` |
+| systemd | `nginx.service` |
+| Docker | `postgres` |
+
+The agent picks up the new configuration on its next heartbeat (up to 15
+seconds) and reports the result. Docker checks need the agent user in the
+`docker` group, which the installer configures when that group exists.
+
+## Add notifications
+
+Open **Settings → Add channel**. Webhooks receive a JSON body with an
+`alert` object and an `event` of `alert.firing` or `alert.resolved`. Email uses
+SMTP; the configuration is encrypted at rest.
+
+Leave a rule’s channel selection empty to send to every enabled channel.

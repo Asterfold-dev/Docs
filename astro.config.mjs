@@ -64,6 +64,37 @@ export default defineConfig({
             },
           ],
         },
+        {
+          label: "Vigil",
+          items: [
+            { label: "Overview", link: "/vigil/" },
+            {
+              label: "Getting started",
+              items: [
+                { label: "Quick start", link: "/vigil/getting-started/quick-start/" },
+              ],
+            },
+            {
+              label: "Guides",
+              items: [
+                { label: "Agent", link: "/vigil/guides/agent/" },
+              ],
+            },
+            {
+              label: "Operations",
+              items: [
+                { label: "Security", link: "/vigil/operations/security/" },
+                { label: "Deployment", link: "/vigil/operations/deployment/" },
+              ],
+            },
+            {
+              label: "Reference",
+              items: [
+                { label: "Configuration", link: "/vigil/reference/configuration/" },
+              ],
+            },
+          ],
+        },
       ],
     }),
   ],

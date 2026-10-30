@@ -1,0 +1,106 @@
+---
+title: Deployment
+description: Compose layout, TLS, backups, upgrades, and retention.
+---
+
+## Compose layout
+
+```text
+db       PostgreSQL 17, persisted volume
+migrate  one-shot migration runner; exits after applying
+app      Vigil server on port 3000, published as VIGIL_PORT
+```
+
+The app waits for `migrate` to complete successfully and for the database to be
+healthy. The image runs as the `node` user (UID 1000) and exposes
+`/api/health` for the container health check.
+
+## Put it behind HTTPS
+
+Use Caddy, nginx, or Traefik in front of `127.0.0.1:3100`:
+
+```caddyfile
+vigil.example.com {
+  reverse_proxy 127.0.0.1:3100
+}
+```
+
+Set before starting the stack:
+
+```dotenv
+APP_URL=https://vigil.example.com
+BETTER_AUTH_URL=https://vigil.example.com
+```
+
+The app uses `BETTER_AUTH_URL` as its auth origin and `APP_URL` in install
+commands. They should match the public origin.
+
+## Backups
+
+The `vigil-db` volume holds users, sessions, hosts, metrics, checks, alerts,
+channels, and audit events.
+
+```bash
+docker compose exec db pg_dump -U vigil vigil > vigil-backup.sql
+```
+
+Restore into a fresh database before starting the app:
+
+```bash
+cat vigil-backup.sql | docker compose exec -T db psql -U vigil -d vigil
+```
+
+Back up `BETTER_AUTH_SECRET` separately. Without it, sessions and notification
+channel configurations cannot be recovered.
+
+## Upgrades
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+The `migrate` service applies new SQL files before the app restarts. The
+migration runner records applied files in `vigil_migrations` and baselines an
+existing schema if the table is empty.
+
+## Retention
+
+Raw metric samples and check results are deleted after `RETENTION_DAYS`
+(30 by default). Resolved alerts are kept for 90 days. The retention job runs
+hourly in the app process.
+
+Charts aggregate at query time:
+
+| Range | Bucket |
+| --- | --- |
+| 1 hour | 1 minute |
+| 24 hours | 5 minutes |
+| 7 days | 30 minutes |
+
+There are no precomputed rollups in v0.1. For a large fleet, add rollup tables
+before increasing retention or reducing the sample interval.
+
+## Health and logs
+
+```bash
+curl -fsS http://127.0.0.1:3100/api/health
+docker compose logs -f app
+docker compose logs migrate
+```
+
+The health endpoint returns `200` with `{"ok":true,"database":"ok"}` when the
+app can query PostgreSQL, and `503` otherwise.
+
+## Local production check
+
+```bash
+npm run build
+DATABASE_URL=postgresql://... \
+BETTER_AUTH_URL=http://localhost:3100 \
+BETTER_AUTH_SECRET=... \
+APP_URL=http://localhost:3100 \
+npm start
+```
+
+`srvx` serves `dist/client` and the server handler from `dist/server`.

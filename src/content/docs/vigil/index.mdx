@@ -1,0 +1,98 @@
+---
+title: Vigil
+description: Self-hosted server monitoring with a small agent, clear dashboards, and useful alerts.
+template: splash
+hero:
+  title: Vigil
+  tagline: Every server, one clear signal.
+  image:
+    file: ../../../assets/vigil.svg
+    alt: Vigil eye mark
+  actions:
+    - text: Quick start
+      link: ./getting-started/quick-start/
+      icon: right-arrow
+      variant: primary
+    - text: Agent guide
+      link: ./guides/agent/
+      icon: external
+      variant: minimal
+---
+
+import { CardGrid, LinkCard } from "@astrojs/starlight/components"
+
+Vigil is a self-hosted monitoring system for the servers you run. A small
+outbound-only agent reports host metrics and local checks; the Vigil console
+turns them into a fleet view, charts, and alerts.
+
+It is built for a small team that wants a clear answer to “is everything
+healthy?” without assembling Prometheus, Grafana, and a query language first.
+
+## Start here
+
+<CardGrid>
+  <LinkCard
+    title="Quick start"
+    description="Run the Compose stack, create the first admin, and enroll a host."
+    href="./getting-started/quick-start/"
+  />
+  <LinkCard
+    title="Agent"
+    description="Install, configure, buffer, and uninstall the Linux agent."
+    href="./guides/agent/"
+  />
+  <LinkCard
+    title="Security"
+    description="Tokens, transport, agent privileges, and alert delivery."
+    href="./operations/security/"
+  />
+  <LinkCard
+    title="Configuration"
+    description="Environment variables, agent settings, and API endpoints."
+    href="./reference/configuration/"
+  />
+</CardGrid>
+
+## What it does
+
+| Area | Details |
+| --- | --- |
+| **Host metrics** | CPU, memory, swap, load, uptime, processes, network, and mounted disks. |
+| **Checks** | HTTP(S) status and body, TCP ports, systemd units, and Docker containers. |
+| **Alerts** | Threshold rules, offline detection, failing checks, email and webhook delivery. |
+| **Fleet view** | Host status, latest samples, active alerts, and failing checks at a glance. |
+| **History** | 1h, 24h, and 7d charts aggregated by the server. |
+| **Footprint** | One small Go agent per host, one Node process, one PostgreSQL database. |
+
+## How it fits together
+
+```text
+monitored host ── HTTPS push ──▶ Vigil app ──▶ PostgreSQL
+   agent             metrics        UI/API       samples
+   checks            checks         alerts       state
+```
+
+The agent connects outbound over HTTPS. It never opens an inbound port and
+never accepts remote commands. Checks are declarative configuration pulled
+from the server on each heartbeat.
+
+## Stack
+
+| Layer | Choice |
+| --- | --- |
+| Framework | [TanStack Start](https://tanstack.com/start) and [React 19](https://react.dev) |
+| Data | [Drizzle ORM](https://orm.drizzle.team) and [PostgreSQL](https://www.postgresql.org) |
+| Auth | [Better Auth](https://www.better-auth.com) |
+| UI | [Tailwind CSS 4](https://tailwindcss.com), Base UI, and Geist |
+| Runtime | Node 24 via [srvx](https://srvx.h3.dev) |
+| Agent | Go standard library, static Linux binary |
+
+The source lives in [Asterfold-dev/Vigil](https://github.com/Asterfold-dev/Vigil).
+
+## Status
+
+Vigil v0.1 is an early release. Host metrics, enrollment, HTTP and systemd
+checks, alert firing and recovery, webhook delivery, offline buffering, and
+offline host detection are exercised end to end. Logs, traces, Kubernetes,
+Windows agents, public status pages, and agent auto-update are not included
+yet.

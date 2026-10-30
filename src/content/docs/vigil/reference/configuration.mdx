@@ -1,0 +1,120 @@
+---
+title: Configuration
+description: Server and agent environment variables, endpoints, and data model.
+---
+
+## Server environment
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | yes | PostgreSQL connection string. |
+| `BETTER_AUTH_SECRET` | yes | Session signing and channel-encryption secret. Use a long random value. |
+| `BETTER_AUTH_URL` | recommended | Exact auth origin, for example `https://vigil.example.com`. |
+| `APP_URL` | recommended | Public base URL used in generated install commands. |
+| `PORT` | no | App port; Compose sets `3000`. |
+| `RETENTION_DAYS` | no | Raw metric and check-result retention; default `30`. |
+| `CONFIG_ENCRYPTION_KEY` | no | Overrides `BETTER_AUTH_SECRET` for channel encryption. |
+| `MIGRATIONS_DIR` | no | Migration directory for `scripts/migrate.mjs`; default `./drizzle`. |
+
+## Agent environment
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `VIGIL_SERVER` | required | Vigil base URL. |
+| `VIGIL_TOKEN` | — | Single-use enrollment token. |
+| `VIGIL_INTERVAL` | `15s` | Push interval, minimum 5s. |
+| `VIGIL_STATE_DIR` | `/var/lib/vigil` | Host token and queue directory. |
+| `VIGIL_HOSTNAME` | system hostname | Reported hostname override. |
+| `VIGIL_LABELS` | empty | Comma-separated `key=value` labels. |
+| `VIGIL_INSECURE_SKIP_VERIFY` | `0` | Disable TLS verification; development only. |
+
+## HTTP endpoints
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/api/agent/enroll` | enrollment token in body | Exchange a single-use token for a host credential. |
+| `POST` | `/api/ingest` | `Bearer` host credential | Push samples and check results; returns check config. |
+| `GET` | `/api/health` | none | App and database health. |
+| `*` | `/api/auth/*` | Better Auth | Sign-in, sign-out, session endpoints. |
+
+## Ingest payload
+
+```json
+{
+  "host": {
+    "hostname": "web-1",
+    "os": "Debian GNU/Linux",
+    "osVersion": "13",
+    "arch": "amd64",
+    "agentVersion": "0.1.0",
+    "ipAddress": "192.168.2.39"
+  },
+  "samples": [
+    {
+      "ts": "2026-10-30T12:00:00Z",
+      "cpuPercent": 4.2,
+      "memoryUsedBytes": 25585254,
+      "memoryTotalBytes": 536870912,
+      "swapUsedBytes": 0,
+      "diskUsedBytes": 693370880,
+      "diskTotalBytes": 8375186227,
+      "load1": 0.12,
+      "load5": 0.1,
+      "load15": 0.08,
+      "uptimeSeconds": 1512000,
+      "processCount": 17,
+      "netRxBytes": 123456,
+      "netTxBytes": 654321,
+      "disks": [
+        { "mount": "/", "filesystem": "overlay", "usedBytes": 693370880, "totalBytes": 8375186227 }
+      ]
+    }
+  ],
+  "checkResults": [
+    {
+      "checkId": "uuid",
+      "ts": "2026-10-30T12:00:00Z",
+      "status": "up",
+      "latencyMs": 21,
+      "statusCode": 200
+    }
+  ]
+}
+```
+
+Metric rows use `(host_id, ts)` as the primary key. Timestamps more than five
+minutes in the future or 48 hours in the past are dropped. Payloads are capped
+at 500 samples and 500 check results.
+
+## Data model
+
+| Table | Purpose |
+| --- | --- |
+| `hosts` | Host identity, status, last seen, labels. |
+| `host_credentials` | Hashed per-host tokens, revocation state. |
+| `enrollment_tokens` | Hashed single-use tokens and expiry. |
+| `metric_samples` | Wide host samples at 15s. |
+| `checks` | Check type, target, interval, timeout, config. |
+| `check_results` | Latest and historical check outcomes. |
+| `alert_rules` | Metric, comparator, threshold, duration, severity. |
+| `alerts` | Firing, acknowledged, and resolved alert lifecycle. |
+| `notification_channels` | Encrypted webhook or SMTP configuration. |
+| `notification_deliveries` | Per-channel delivery attempts and errors. |
+| `audit_events` | Configuration mutations and actor. |
+| Better Auth tables | Users, sessions, accounts, verification. |
+
+## Default alert rules
+
+Vigil seeds these once, when no rules exist:
+
+| Rule | Condition | Duration |
+| --- | --- | --- |
+| CPU above 90% | `cpu_percent > 90` | 300s |
+| Memory above 90% | `memory_percent > 90` | 300s |
+| Disk above 85% | `disk_percent > 85` | 600s |
+| Host offline | no heartbeat for 90s | immediate |
+| Check failing | latest check is down | 120s |
+
+Rules are evaluated every 30 seconds. A firing alert that clears is resolved;
+if the same rule re-fires within ten minutes, the existing alert is reopened to
+avoid notification spam.

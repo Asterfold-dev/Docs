@@ -1,0 +1,112 @@
+---
+title: Agent
+description: Install, configure, and operate the Vigil Linux agent.
+---
+
+The agent is a static Go binary. It collects host metrics, runs the checks
+assigned to its host, and pushes the results to Vigil over HTTPS. It does not
+listen on a port and does not accept commands.
+
+## Requirements
+
+- Linux on amd64 or arm64.
+- systemd.
+- Outbound HTTPS access to the Vigil `APP_URL`.
+- Root for installation. After installation the service runs as the `vigil`
+  system user.
+
+## Install
+
+Generate a token in **Overview → Add host**, then run:
+
+```bash
+curl -fsSL http://your-vigil-host:3100/install.sh \
+  | sudo env VIGIL_SERVER='http://your-vigil-host:3100' VIGIL_TOKEN='vge_...' sh
+```
+
+The installer:
+
+1. downloads `vigil-agent-linux-<arch>` and verifies `SHA256SUMS`;
+2. installs `/usr/local/bin/vigil-agent`;
+3. creates the `vigil` system user and `/var/lib/vigil`;
+4. writes `/etc/vigil/agent.env` with mode `0600`;
+5. adds the user to the `docker` group when it exists;
+6. installs and starts `vigil-agent.service`.
+
+The first start exchanges the enrollment token for a per-host credential and
+saves it to `/var/lib/vigil/host-token`. The enrollment token is not needed
+after that.
+
+## Configure
+
+Edit `/etc/vigil/agent.env` and restart:
+
+```bash
+sudo systemctl restart vigil-agent
+```
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `VIGIL_SERVER` | required | Base URL of the Vigil instance. |
+| `VIGIL_TOKEN` | — | Single-use enrollment token; only used when no host token exists. |
+| `VIGIL_INTERVAL` | `15s` | Push interval, minimum 5 seconds. |
+| `VIGIL_STATE_DIR` | `/var/lib/vigil` | Host token and queue directory. |
+| `VIGIL_HOSTNAME` | system hostname | Override the reported hostname. |
+| `VIGIL_LABELS` | empty | Comma-separated `key=value` labels, reserved for later. |
+| `VIGIL_INSECURE_SKIP_VERIFY` | `0` | `1` disables TLS verification; development only. |
+
+## What is collected
+
+| Metric | Source |
+| --- | --- |
+| CPU | `/proc/stat` deltas |
+| Memory and swap | `/proc/meminfo` |
+| Load | `/proc/loadavg` |
+| Uptime | `/proc/uptime` |
+| Processes | numeric entries in `/proc` |
+| Network | `/proc/net/dev`, all interfaces except loopback |
+| Disks | `/proc/mounts` plus `statfs`, real filesystems only |
+
+Samples are timestamped in UTC. The server computes chart values and stores
+raw samples for `RETENTION_DAYS` (30 by default).
+
+## Offline buffer
+
+When Vigil is unreachable, the agent appends each payload to
+`/var/lib/vigil/queue.jsonl`. The queue is capped at 16 MB; the oldest entries
+are dropped first. On reconnect the agent flushes the queue before sending the
+current sample. Metric samples use `(host, timestamp)` as a key, so retries are
+safe; check results may be duplicated around a partial flush.
+
+## Checks
+
+The server returns the host’s enabled checks with every ingest response. The
+agent stores the configuration in memory and applies it without a restart.
+
+| Type | Behavior |
+| --- | --- |
+| `http` | `GET`; up for 2xx/3xx by default. Optional `expectedStatus` and `bodyContains` are supported in the check config. |
+| `tcp` | TCP connect to `host:port`. |
+| `systemd` | `systemctl is-active <unit>`. |
+| `docker` | `docker inspect --format '{{.State.Status}}' <container>`; up when `running`. |
+
+Intervals under 15 seconds are treated as 60 seconds. A check timeout is capped
+at 30 seconds by the server.
+
+## Upgrade and uninstall
+
+Upgrade by running the install command again with a fresh or existing
+enrollment token. The host token is preserved.
+
+Uninstall:
+
+```bash
+sudo systemctl disable --now vigil-agent
+sudo rm -f /etc/systemd/system/vigil-agent.service /usr/local/bin/vigil-agent
+sudo rm -rf /etc/vigil /var/lib/vigil
+sudo systemctl daemon-reload
+sudo userdel vigil
+```
+
+Deleting the host in Vigil removes its metrics, checks, and alerts. Revoking a
+host invalidates its credential immediately but keeps its history.

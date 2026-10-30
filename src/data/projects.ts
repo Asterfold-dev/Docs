@@ -13,4 +13,11 @@ export const projects: Project[] = [
     href: "aegis/",
     status: "Available",
   },
+  {
+    name: "Vigil",
+    description:
+      "Self-hosted server monitoring with a small outbound-only agent, host metrics, checks, and alerts.",
+    href: "vigil/",
+    status: "Early",
+  },
 ]

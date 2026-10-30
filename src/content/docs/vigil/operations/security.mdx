@@ -1,0 +1,73 @@
+---
+title: Security
+description: Token model, transport, agent privileges, and alert delivery safety.
+---
+
+Vigil’s monitoring path is deliberately narrow: monitored hosts push data
+outbound and never accept commands.
+
+## Enrollment and host credentials
+
+- Enrollment tokens are single-use, expire after one hour, and are stored as
+  SHA-256 hashes.
+- The agent exchanges a valid enrollment token for a 256-bit per-host
+  credential. The credential is stored hashed in `host_credentials`.
+- The agent stores its credential in `/var/lib/vigil/host-token` with mode
+  `0600`.
+- Revoking a host marks the credential revoked and stops ingest on the next
+  request.
+- Deleting a host cascades to its metrics, checks, and alerts.
+
+Tokens are shown once. If an enrollment token expires before use, create a new
+one.
+
+## Transport
+
+Run Vigil behind a TLS-terminating reverse proxy and set `APP_URL` to the HTTPS
+origin. The agent verifies the system CA store. Do not use
+`VIGIL_INSECURE_SKIP_VERIFY=1` outside development.
+
+The agent never opens an inbound port and has no remote-execution API. Checks
+are declarative rows fetched from the server; the agent only evaluates the
+types it supports.
+
+## Agent privileges
+
+The installer creates a `vigil` system user and runs the service as that user.
+
+- `/proc` metrics are readable without privilege.
+- `systemctl is-active` works unprivileged for service state.
+- Docker checks need access to the Docker socket. The installer adds `vigil`
+  to the `docker` group when it exists. Membership in `docker` is effectively
+  root-equivalent on the host; remove the group line from the unit if Docker
+  checks are not needed.
+
+`NoNewPrivileges`, `PrivateTmp`, and `ProtectHome` are enabled in the unit.
+Uninstall steps are in the [agent guide](../guides/agent/).
+
+## Application access
+
+- The first account created becomes the administrator and setup closes.
+- Server functions require a session; privileged mutations re-check the admin
+  role on the server.
+- Server functions are protected by TanStack Start’s CSRF middleware.
+- All configuration mutations are written to the audit log.
+- Sessions are HttpOnly; use HTTPS so cookies are marked secure by the
+  deployment.
+
+## Notification channels
+
+Webhook URLs and SMTP credentials are encrypted at rest with AES-256-GCM. The
+key is derived from `BETTER_AUTH_SECRET`. Changing that secret makes existing
+channel configuration unreadable; delete and recreate channels after a secret
+rotation.
+
+Webhooks receive alert summaries and details. Do not put secrets in rule names
+or host labels.
+
+## Check targets
+
+Checks run from the agent, not from the Vigil server, so they see the target
+from the monitored host’s network position. Any user who can create checks can
+make the agent connect to internal addresses. Keep Vigil accounts trusted, or
+restrict check creation to administrators in a future release.
