@@ -111,15 +111,15 @@ or delete users. The last administrator cannot be removed.
 To enable single sign-on with any OIDC provider:
 
 1. Create a confidential OIDC application with your provider.
-2. Register `https://your-vigil-host/api/auth/callback/oidc` as the redirect
-   URI. If you set `SSO_PROVIDER_ID`, use that ID in the path instead.
-3. Set `SSO_ISSUER`, `SSO_CLIENT_ID`, `SSO_CLIENT_SECRET`, and optionally
-   `SSO_NAME` and `SSO_SCOPES` in Vigil's environment.
-4. Restart Vigil. The login page now offers **Continue with `SSO_NAME`**.
+2. Open **Settings → Single sign-on** in Vigil.
+3. Enable SSO, enter the provider name, provider ID, issuer URL, client ID,
+   client secret, and scopes.
+4. Copy the callback URL shown in Settings and register it with the provider.
+5. Save. The login page updates immediately; no restart is required.
 
 Aegis, Keycloak, Authentik, Pocket ID, and Entra ID are all supported. For
-providers without usable discovery, set `SSO_AUTHORIZATION_URL`,
-`SSO_TOKEN_URL`, and `SSO_USERINFO_URL`.
+providers without usable discovery, use the advanced endpoint fields in the
+same card.
 
 Matching SSO emails link to existing accounts automatically. **Settings** also
 controls whether unknown SSO users are created and whether password login is

@@ -78,32 +78,27 @@ restrict check creation to administrators in a future release.
 Vigil uses generic OpenID Connect, not a provider-specific integration. Aegis,
 Keycloak, Authentik, Pocket ID, Entra ID, and other OIDC providers work.
 
-Register a confidential client with this callback:
+Register a confidential client with the callback shown in
+**Settings → Single sign-on**:
 
 ```text
-https://vigil.example.com/api/auth/callback/<SSO_PROVIDER_ID>
+https://vigil.example.com/api/auth/callback/<provider id>
 ```
 
 The default provider ID is `oidc`, so the default callback is
-`/api/auth/callback/oidc`. Set `SSO_PROVIDER_ID` if your provider needs a
-different stable ID.
+`/api/auth/callback/oidc`. Change the provider ID in Settings if your provider
+needs a different stable ID.
 
-Configure:
+Configure the provider in **Settings → Single sign-on**: name, provider ID,
+issuer, client ID, client secret, scopes, and optional advanced endpoints. The
+client secret is encrypted at rest and never returned to the browser.
 
-```dotenv
-SSO_ISSUER=https://auth.example.com
-SSO_CLIENT_ID=vigil
-SSO_CLIENT_SECRET=...
-SSO_NAME=Aegis
-SSO_SCOPES=openid profile email groups
-```
+Saving applies immediately; no restart is required. The login page shows
+**Continue with `<provider name>`**, and the same card can link the current
+account.
 
-Then restart Vigil. The login page shows **Continue with `SSO_NAME`**, and
-**Settings → Single sign-on** can link the current account.
-
-If the provider’s discovery document is not usable, set
-`SSO_AUTHORIZATION_URL`, `SSO_TOKEN_URL`, and `SSO_USERINFO_URL` explicitly.
-For Aegis, the legacy `AEGIS_OIDC_*` variables still work.
+If the provider’s discovery document is not usable, enter the authorization,
+token, and UserInfo endpoints in the advanced section.
 
 Most providers require HTTPS for non-loopback redirect URIs. Plain HTTP only
 works for `localhost` during development. Put Vigil behind TLS before enabling
@@ -117,6 +112,7 @@ SSO for a LAN or public host.
   create a member account. Turn it off to require an administrator to add the
   account first.
 - **Settings → Password sign-in** can disable email/password login entirely.
-  SSO remains available. Configure SSO before disabling it.
+  SSO remains available. At least one administrator must be linked to the
+  provider before password sign-in can be disabled.
 - Administrators can change roles and revoke sessions under **Users**. The last
   administrator cannot be demoted or deleted.

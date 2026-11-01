@@ -13,18 +13,30 @@ description: Server and agent environment variables, endpoints, and data model.
 | `APP_URL` | recommended | Public base URL used in generated install commands. |
 | `PORT` | no | App port; Compose sets `3000`. |
 | `RETENTION_DAYS` | no | Raw metric and check-result retention; default `30`. |
-| `SSO_ISSUER` | no | OIDC issuer base URL. Enables SSO when set with the client credentials. |
-| `SSO_CLIENT_ID` | no | OIDC client ID registered with the provider. |
-| `SSO_CLIENT_SECRET` | no | OIDC client secret. Keep it server-side. |
-| `SSO_NAME` | no | Button and UI label; defaults to `Single sign-on`. |
-| `SSO_PROVIDER_ID` | no | Stable provider ID used in the callback path; defaults to `oidc`. |
-| `SSO_SCOPES` | no | Space- or comma-separated scopes; defaults to `openid profile email`. |
-| `SSO_REDIRECT_URI` | no | Override the callback URI. Default: `${BETTER_AUTH_URL}/api/auth/callback/<provider id>`. |
-| `SSO_DISCOVERY_URL` | no | Explicit OIDC discovery document. Otherwise derived from `SSO_ISSUER`. |
-| `SSO_AUTHORIZATION_URL`, `SSO_TOKEN_URL`, `SSO_USERINFO_URL` | no | Explicit endpoints for providers without usable discovery. |
-| `AEGIS_OIDC_*` | no | Legacy aliases for the same settings; still supported. |
 | `CONFIG_ENCRYPTION_KEY` | no | Overrides `BETTER_AUTH_SECRET` for channel encryption. |
 | `MIGRATIONS_DIR` | no | Migration directory for `scripts/migrate.mjs`; default `./drizzle`. |
+
+## Single sign-on settings
+
+SSO is configured in **Settings → Single sign-on**, not through environment
+variables. The settings are stored in the database; the client secret is
+encrypted at rest.
+
+| Field | Purpose |
+| --- | --- |
+| Provider name | Label shown on the login button and in Settings. |
+| Provider ID | Stable lowercase ID used in the callback path; defaults to `oidc`. |
+| Issuer URL | OIDC issuer, for example `https://auth.example.com`. For Aegis use the issuer ending in `/api/auth`. |
+| Client ID / secret | Credentials from the identity provider application. Leave the secret blank when saving to keep the existing one. |
+| Scopes | Usually `openid profile email`; add `groups` when the provider supports it. |
+| Discovery URL | Optional explicit discovery document. |
+| Authorization / token / userinfo URL | Optional explicit endpoints for providers without usable discovery. |
+| Redirect URI | Optional override. The computed callback URL is shown in Settings. |
+
+Changes apply immediately; restarting Vigil is not required.
+
+Legacy `SSO_*` and `AEGIS_OIDC_*` environment variables are imported once into
+the database when no SSO settings exist yet.
 
 ## Agent environment
 
