@@ -35,6 +35,30 @@ BETTER_AUTH_URL=https://vigil.example.com
 The app uses `BETTER_AUTH_URL` as its auth origin and `APP_URL` in install
 commands. They should match the public origin.
 
+### Local HTTPS for SSO testing
+
+Identity providers reject HTTP redirect URIs for non-localhost hosts. Caddy's
+internal CA is enough for a LAN test:
+
+```caddyfile
+https://192.168.2.86:3443 {
+  tls internal
+  reverse_proxy 127.0.0.1:3100
+}
+```
+
+Run `caddy trust` once, start Caddy, then use:
+
+```dotenv
+BETTER_AUTH_URL=https://192.168.2.86:3443
+APP_URL=http://192.168.2.86:3100
+```
+
+Open the HTTPS address, accept/trust the local certificate, and register the
+HTTPS callback shown in Settings. Keeping `APP_URL` on HTTP lets existing agents
+continue using the direct ingest endpoint. Use a real certificate outside local
+testing.
+
 ## Backups
 
 The `vigil-db` volume holds users, sessions, hosts, metrics, checks, alerts,
