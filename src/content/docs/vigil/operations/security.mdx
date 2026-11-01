@@ -75,22 +75,48 @@ restrict check creation to administrators in a future release.
 
 ## Single sign-on
 
-Vigil can use Aegis as its OIDC identity provider. Register a confidential
-client in Aegis with this callback:
+Vigil uses generic OpenID Connect, not a provider-specific integration. Aegis,
+Keycloak, Authentik, Pocket ID, Entra ID, and other OIDC providers work.
+
+Register a confidential client with this callback:
 
 ```text
-https://vigil.example.com/api/auth/callback/aegis
+https://vigil.example.com/api/auth/callback/<SSO_PROVIDER_ID>
 ```
 
-Set `AEGIS_OIDC_ISSUER`, `AEGIS_OIDC_CLIENT_ID`, and
-`AEGIS_OIDC_CLIENT_SECRET`, then restart Vigil. The login page shows a
-**Continue with Aegis** button, and **Settings → Single sign-on** can link the
-current account.
+The default provider ID is `oidc`, so the default callback is
+`/api/auth/callback/oidc`. Set `SSO_PROVIDER_ID` if your provider needs a
+different stable ID.
 
-Aegis requires HTTPS for non-loopback redirect URIs. Plain HTTP only works for
-`localhost` during development. Put Vigil behind TLS before enabling SSO for a
-LAN or public host.
+Configure:
 
-SSO users are created as members on first sign-in. Administrators can promote
-them under **Users**. Local password accounts remain available as a fallback,
-and the last administrator cannot be demoted or deleted.
+```dotenv
+SSO_ISSUER=https://auth.example.com
+SSO_CLIENT_ID=vigil
+SSO_CLIENT_SECRET=...
+SSO_NAME=Aegis
+SSO_SCOPES=openid profile email groups
+```
+
+Then restart Vigil. The login page shows **Continue with `SSO_NAME`**, and
+**Settings → Single sign-on** can link the current account.
+
+If the provider’s discovery document is not usable, set
+`SSO_AUTHORIZATION_URL`, `SSO_TOKEN_URL`, and `SSO_USERINFO_URL` explicitly.
+For Aegis, the legacy `AEGIS_OIDC_*` variables still work.
+
+Most providers require HTTPS for non-loopback redirect URIs. Plain HTTP only
+works for `localhost` during development. Put Vigil behind TLS before enabling
+SSO for a LAN or public host.
+
+### Account linking and provisioning
+
+- If an SSO email matches an existing Vigil account, the provider is linked to
+  that account automatically. No duplicate user is created.
+- **Settings → Automatic SSO accounts** controls whether unknown SSO emails
+  create a member account. Turn it off to require an administrator to add the
+  account first.
+- **Settings → Password sign-in** can disable email/password login entirely.
+  SSO remains available. Configure SSO before disabling it.
+- Administrators can change roles and revoke sessions under **Users**. The last
+  administrator cannot be demoted or deleted.

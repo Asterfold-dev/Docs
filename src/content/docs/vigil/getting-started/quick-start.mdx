@@ -108,14 +108,19 @@ Leave a rule’s channel selection empty to send to every enabled channel.
 activity. Administrators can add local accounts, change roles, revoke sessions,
 or delete users. The last administrator cannot be removed.
 
-To enable Aegis single sign-on:
+To enable single sign-on with any OIDC provider:
 
-1. In Aegis, create a confidential OIDC application.
-2. Register `https://your-vigil-host/api/auth/callback/aegis` as the redirect
-   URI and allow the `openid`, `profile`, `email`, and `groups` scopes.
-3. Set `AEGIS_OIDC_ISSUER`, `AEGIS_OIDC_CLIENT_ID`, and
-   `AEGIS_OIDC_CLIENT_SECRET` in Vigil's environment.
-4. Restart Vigil. The login page now offers **Continue with Aegis**.
+1. Create a confidential OIDC application with your provider.
+2. Register `https://your-vigil-host/api/auth/callback/oidc` as the redirect
+   URI. If you set `SSO_PROVIDER_ID`, use that ID in the path instead.
+3. Set `SSO_ISSUER`, `SSO_CLIENT_ID`, `SSO_CLIENT_SECRET`, and optionally
+   `SSO_NAME` and `SSO_SCOPES` in Vigil's environment.
+4. Restart Vigil. The login page now offers **Continue with `SSO_NAME`**.
 
-SSO requires HTTPS for non-localhost hosts because Aegis rejects insecure
-redirect URIs.
+Aegis, Keycloak, Authentik, Pocket ID, and Entra ID are all supported. For
+providers without usable discovery, set `SSO_AUTHORIZATION_URL`,
+`SSO_TOKEN_URL`, and `SSO_USERINFO_URL`.
+
+Matching SSO emails link to existing accounts automatically. **Settings** also
+controls whether unknown SSO users are created and whether password login is
+allowed. SSO requires HTTPS for non-localhost hosts.
